@@ -35,24 +35,16 @@
         }
 
         .controls {
-            display: none;
+            display: grid;
             margin-top: 20px;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 10px;
+            justify-content: center;
         }
 
-        @media (max-width: 768px) {
+        @media (min-width: 769px) {
             .controls {
-                display: grid;
-                grid-template-columns: repeat(3, 60px);
-                grid-template-rows: repeat(2, 60px);
-                gap: 10px;
-                justify-content: center;
-            }
-            
-            .instructions {
-                display: none;
-            }
-            
-            .food-legend {
                 display: none;
             }
         }
@@ -672,30 +664,38 @@
             handleInput(e.code);
         });
 
-        document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowUp'); });
-        document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowDown'); });
-        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowLeft'); });
-        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowRight'); });
+        document.addEventListener('keydown', (e) => {
+            handleInput(e.code);
+        });
 
-        document.getElementById('btnUp').addEventListener('click', () => handleInput('ArrowUp'));
-        document.getElementById('btnDown').addEventListener('click', () => handleInput('ArrowDown'));
-        document.getElementById('btnLeft').addEventListener('click', () => handleInput('ArrowLeft'));
-        document.getElementById('btnRight').addEventListener('click', () => handleInput('ArrowRight'));
+        function bindTouchButton(id, code) {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(code); }, { passive: false });
+            btn.addEventListener('click', () => handleInput(code));
+        }
+
+        bindTouchButton('btnUp', 'ArrowUp');
+        bindTouchButton('btnDown', 'ArrowDown');
+        bindTouchButton('btnLeft', 'ArrowLeft');
+        bindTouchButton('btnRight', 'ArrowRight');
 
         let touchStartX = 0, touchStartY = 0;
         canvas.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-        });
+        }, { passive: true });
         canvas.addEventListener('touchend', (e) => {
             const dx = e.changedTouches[0].clientX - touchStartX;
             const dy = e.changedTouches[0].clientY - touchStartY;
-            if (Math.abs(dx) > Math.abs(dy)) {
-                handleInput(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
-            } else {
-                handleInput(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+            const minSwipe = 30;
+            if (Math.abs(dx) > minSwipe || Math.abs(dy) > minSwipe) {
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    handleInput(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+                } else {
+                    handleInput(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+                }
             }
-        });
+        }, { passive: true });
 
         function handleInput(code) {
             if (gameState === 'start' || gameState === 'over') {
