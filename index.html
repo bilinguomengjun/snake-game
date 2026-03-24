@@ -31,7 +31,56 @@
             border: 4px solid #00ff88;
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            touch-action: none;
         }
+
+        .controls {
+            display: none;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                display: grid;
+                grid-template-columns: repeat(3, 60px);
+                grid-template-rows: repeat(2, 60px);
+                gap: 10px;
+                justify-content: center;
+            }
+            
+            .instructions {
+                display: none;
+            }
+            
+            .food-legend {
+                display: none;
+            }
+        }
+
+        .btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            font-size: 24px;
+            color: #00ff88;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .btn:active {
+            background: rgba(0, 255, 136, 0.5);
+        }
+
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
         
         .score-board {
             margin-top: 20px;
@@ -88,6 +137,12 @@
         <span class="ai1">AI红: <span id="score1">0</span></span>
         <span class="ai2">AI黄: <span id="score2">0</span></span>
     </div>
+    <div class="controls">
+        <button class="btn btn-up" id="btnUp">↑</button>
+        <button class="btn btn-left" id="btnLeft">←</button>
+        <button class="btn btn-down" id="btnDown">↓</button>
+        <button class="btn btn-right" id="btnRight">→</button>
+    </div>
     <div class="instructions">
         <p>方向键 <span>↑ ↓ ← →</span> 控制移动</p>
         <p>空格键 <span>空格</span> 重新开始</p>
@@ -102,6 +157,17 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth * 0.95, 500);
+            const maxHeight = Math.min(window.innerHeight * 0.6, 500);
+            const size = Math.min(maxWidth, maxHeight);
+            canvas.width = size;
+            canvas.height = size;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
         
         const gridSize = 20;
         const tileCount = canvas.width / gridSize;
@@ -603,8 +669,37 @@
         }
         
         document.addEventListener('keydown', (e) => {
+            handleInput(e.code);
+        });
+
+        document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowUp'); });
+        document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowDown'); });
+        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowLeft'); });
+        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('ArrowRight'); });
+
+        document.getElementById('btnUp').addEventListener('click', () => handleInput('ArrowUp'));
+        document.getElementById('btnDown').addEventListener('click', () => handleInput('ArrowDown'));
+        document.getElementById('btnLeft').addEventListener('click', () => handleInput('ArrowLeft'));
+        document.getElementById('btnRight').addEventListener('click', () => handleInput('ArrowRight'));
+
+        let touchStartX = 0, touchStartY = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        canvas.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                handleInput(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+            } else {
+                handleInput(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+            }
+        });
+
+        function handleInput(code) {
             if (gameState === 'start' || gameState === 'over') {
-                if (e.code === 'Space' || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                if (code === 'Space' || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(code)) {
                     initGame();
                 }
                 return;
@@ -613,7 +708,7 @@
             const player = snakes[0];
             if (!player.alive) return;
             
-            switch (e.code) {
+            switch (code) {
                 case 'ArrowUp':
                     if (player.direction.y !== 1) player.nextDirection = { x: 0, y: -1 };
                     break;
@@ -628,10 +723,10 @@
                     break;
             }
             
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
-                e.preventDefault();
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(code)) {
+                event?.preventDefault?.();
             }
-        });
+        }
         
         function drawStartScreen() {
             ctx.fillStyle = '#1a1a2e';
