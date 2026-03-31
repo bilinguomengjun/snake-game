@@ -572,10 +572,8 @@
         
         function drawSnake(snake, index) {
             const colors = SNAKE_COLORS[index];
-            const isSlowed = effectTimers[index] > 0 && snake.speed > baseSpeed;
-            const isSpeedBoosted = effectTimers[index] > 0 && snake.speed < baseSpeed;
             
-            const bodyColor = isSlowed ? '#4d96ff' : (isSpeedBoosted ? '#ff9500' : colors.body);
+            const bodyColor = colors.body;
             const headColor = bodyColor;
             
             for (let i = snake.body.length - 1; i >= 0; i--) {
@@ -638,15 +636,40 @@
             ctx.globalAlpha = 1;
         }
         
+        function isInCorner(x, y) {
+            const cornerSize = 3;
+            return (x < cornerSize && y < cornerSize) ||
+                   (x >= tileCount - cornerSize && y < cornerSize) ||
+                   (x < cornerSize && y >= tileCount - cornerSize) ||
+                   (x >= tileCount - cornerSize && y >= tileCount - cornerSize);
+        }
+
         function draw() {
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const playerHead = snakes[0]?.body[0];
+            const inCorner = playerHead && isInCorner(playerHead.x, playerHead.y);
             
-            for (let i = 0; i < tileCount; i++) {
-                for (let j = 0; j < tileCount; j++) {
-                    if ((i + j) % 2 === 0) {
-                        ctx.fillStyle = '#1f1f35';
-                        ctx.fillRect(i * gridSize, j * gridSize, gridSize, gridSize);
+            if (inCorner) {
+                ctx.fillStyle = '#2d1a3e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                for (let i = 0; i < tileCount; i++) {
+                    for (let j = 0; j < tileCount; j++) {
+                        if ((i + j) % 2 === 0) {
+                            ctx.fillStyle = '#3d2a4e';
+                            ctx.fillRect(i * gridSize, j * gridSize, gridSize, gridSize);
+                        }
+                    }
+                }
+            } else {
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                for (let i = 0; i < tileCount; i++) {
+                    for (let j = 0; j < tileCount; j++) {
+                        if ((i + j) % 2 === 0) {
+                            ctx.fillStyle = '#1f1f35';
+                            ctx.fillRect(i * gridSize, j * gridSize, gridSize, gridSize);
+                        }
                     }
                 }
             }
@@ -708,18 +731,19 @@
             const player = snakes[0];
             if (!player.alive) return;
             
+            const currentDir = player.nextDirection || player.direction;
             switch (code) {
                 case 'ArrowUp':
-                    if (player.direction.y !== 1) player.nextDirection = { x: 0, y: -1 };
+                    if (currentDir.y !== 1) player.nextDirection = { x: 0, y: -1 };
                     break;
                 case 'ArrowDown':
-                    if (player.direction.y !== -1) player.nextDirection = { x: 0, y: 1 };
+                    if (currentDir.y !== -1) player.nextDirection = { x: 0, y: 1 };
                     break;
                 case 'ArrowLeft':
-                    if (player.direction.x !== 1) player.nextDirection = { x: -1, y: 0 };
+                    if (currentDir.x !== 1) player.nextDirection = { x: -1, y: 0 };
                     break;
                 case 'ArrowRight':
-                    if (player.direction.x !== -1) player.nextDirection = { x: 1, y: 0 };
+                    if (currentDir.x !== -1) player.nextDirection = { x: 1, y: 0 };
                     break;
             }
             
